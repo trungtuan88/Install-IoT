@@ -1,0 +1,26 @@
+Step 1:
+# Mở file r.local
+    sudo -E nano /media/tuan/rootfs/etc/rc.local 
+
+Step 2:
+# thêm câu lệnh sau 
+    /etc/auto_install_iot_box.sh 2>&1 | tee /home/pi/init_posbox_image.log
+
+# Vào sau đoạn
+
+    _IP=$(hostname -I) || true
+    if [ "$_IP" ]; then
+    printf "My IP address is %s\n" "$_IP"
+    fi
+
+Step 3:
+# Thêm file auto_install_iot_box.sh vào đường dẫn sau
+
+    sudo nano /media/tuan/rootfs/etc/auto_install_iot_box.sh
+
+Step 4:
+# Cấp quyền cho file trên
+
+    sudo chmod 755 /media/tuan/rootfs/etc/auto_install_iot_box.sh
+
+
