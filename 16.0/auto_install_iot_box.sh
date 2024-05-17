@@ -66,8 +66,8 @@ apt-get update && apt-get -y upgrade
 
 # At the first start it is necessary to configure a password
 # This will be modified by a unique password on the first start of Odoo
-password="$(openssl rand -base64 12)"
-echo "pi:${password}" | chpasswd
+# password="$(openssl rand -base64 12)"
+# echo "pi:${password}" | chpasswd
 
 PKGS_TO_INSTALL="
     console-data \
@@ -163,7 +163,6 @@ PIP_TO_INSTALL="
     RPi.GPIO \
     rjsmin==1.1.0 \
     num2words==0.5.9 \
-    scapy \
     ipaddress \
     ngrok"
 
@@ -171,7 +170,7 @@ cd /
 mkdir venv
 python3 -m venv venv
 venv/bin/pip3 install ${PIP_TO_INSTALL}
-rsync -avrhp venv/lib/python3.11/site-packages/* /usr/lib/python3/dist-packages/
+rsync -avrhp /venv/lib/python3.11/site-packages/* /usr/lib/python3/dist-packages/
 
 # Dowload MPD server and library for Six terminals
 wget 'https://nightly.odoo.com/master/iotbox/eftdvs' -P /usr/local/bin/
@@ -187,6 +186,7 @@ chown pi:pi /var/log/odoo
 chown pi:pi -R /home/pi/odoo/
 chown pi:pi -R /etc/ssl/certs/
 chown pi:pi -R /etc/ssl/private/
+chown pi:pi -R /etc/avahi/services/
 
 # logrotate is very picky when it comes to file permissions
 chown -R root:root /etc/logrotate.d/
@@ -222,6 +222,35 @@ echo "disable_overscan=1" >> /boot/config.txt
 sed -i '/dtoverlay/d' /boot/config.txt
 
 sed -i '/dtoverlay=vc4-kms-v3d/d' /boot/firmware/config.txt
+
+sed -i 's/^#host-name=foo.*/host-name=viindoo-iot/' /etc/avahi/avahi-daemon.conf
+
+# Create file ngnix viindoo-iot
+cat <<EOF > /etc/nginx/sites-enabled/viindoo-iot
+server{
+  listen 80;      # for IPv4
+  listen [::]:80; # for IPv6
+
+  server_name viindoo-iot.local;
+  access_log /var/log/nginx/node-red.access.log;
+
+  location / {
+    proxy_pass http://127.0.0.1:8069;
+
+    proxy_set_header Host            \$host;
+    proxy_set_header X-Real-IP       \$remote_addr;
+    proxy_set_header X-Forwarded-For \$remote_addr;
+    proxy_http_version 1.1;
+
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_cache_bypass 1;
+    proxy_no_cache 1;
+
+    port_in_redirect on;
+  }
+}
+EOF
 
 # exclude /drivers folder from git info to be able to load specific drivers
 echo "addons/hw_drivers/iot_devices/" > /home/pi/odoo/.git/info/exclude
