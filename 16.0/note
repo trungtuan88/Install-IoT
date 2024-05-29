@@ -1,0 +1,10 @@
+# chạy với quyền sudo cho thư viên bluepy
+sudo setcap cap_net_raw+e /usr/lib/python3/dist-packages/bluepy/bluepy-helper
+sudo setcap cap_net_admin+eip /usr/lib/python3/dist-packages/bluepy/bluepy-helper
+
+# để cho raspberrypi khong lưu journal trong var nữa thì chỉnh sửa lại file sau
+
+sudo nano /etc/systemd/journald.conf
+
+# Tìm tới dòng #Storage=yes sửa thành 
+Storage=no
