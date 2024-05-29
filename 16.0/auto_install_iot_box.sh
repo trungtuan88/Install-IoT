@@ -164,7 +164,8 @@ PIP_TO_INSTALL="
     rjsmin==1.1.0 \
     num2words==0.5.9 \
     ipaddress \
-    ngrok"
+    ngrok \
+    bluepy"
 
 cd /
 mkdir venv
@@ -225,6 +226,10 @@ sed -i '/dtoverlay=vc4-kms-v3d/d' /boot/firmware/config.txt
 
 sed -i 's/^#host-name=foo.*/host-name=viindoo-iot/' /etc/avahi/avahi-daemon.conf
 
+sed -i 's/^#SystemMaxUse=.*/SystemMaxUse=1M/' /etc/systemd/journald.conf
+
+sed -i 's/^#RuntimeMaxUse=.*/RuntimeMaxUse=10/' /etc/systemd/journald.conf
+
 # Create file ngnix viindoo-iot
 cat <<EOF > /etc/nginx/sites-enabled/viindoo-iot
 server{
@@ -251,6 +256,12 @@ server{
   }
 }
 EOF
+
+# Override and edit the code of the odoo/addons/hw_drivers/main.py function
+file_path="/home/pi/odoo/addons/hw_drivers/main.py"
+sed -i '/def run(self):/a\
+        \# additional delay is needed to be able to override new functions\
+        time.sleep(1)' "$file_path"
 
 # exclude /drivers folder from git info to be able to load specific drivers
 echo "addons/hw_drivers/iot_devices/" > /home/pi/odoo/.git/info/exclude
